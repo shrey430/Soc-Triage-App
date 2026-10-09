@@ -1,0 +1,8 @@
+host,asset_id,ip,owner,department,role,criticality,crown_jewel,environment,os,data_classification
+test-vm-07,AST-1007,10.10.5.27,it-lab-team,IT,Lab test virtual machine,1,false,test,Ubuntu 24.04,none
+ws-mkt-114,AST-2114,10.20.1.114,a.rao,Marketing,Staff workstation,2,false,production,Windows 11,internal
+lt-sales-042,AST-2042,10.20.3.42,j.menon,Sales,Staff laptop (travels),3,false,production,Windows 11,confidential
+ws-hr-023,AST-2023,10.20.2.23,p.shah,HR,Staff workstation with HR system access,3,false,production,Windows 11,restricted-pii
+db-fin-01,AST-0001,10.1.1.10,finance-dba-team,Finance,Core finance database server (general ledger),5,true,production,Windows Server 2022,restricted-financial
+dc-01,AST-0002,10.1.1.2,identity-team,IT,Active Directory domain controller,5,true,production,Windows Server 2022,restricted
+web-01,AST-0301,10.5.0.11,web-team,Digital,Public customer web server,4,false,production,Ubuntu 22.04,public

@@ -1,0 +1,792 @@
+{
+  "name": "SentinelFlow: Governed SOC Alert Triage",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "soc-triage",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "488d941c-1c64-449d-b35e-68e3c8527057",
+      "name": "Security Alert (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "132d7e15-d57a-474e-ae96-f7cb7dec1423"
+    },
+    {
+      "parameters": {
+        "jsCode": "// SOC Orchestrator: entry point of the governed triage workflow.\n// Change BACKEND_URL to http://host.docker.internal:8000 if n8n runs in Docker.\nconst BACKEND_URL = 'http://localhost:8000';\nconst body = $input.first().json.body || {};\nreturn [{ json: {\n  backend_url: BACKEND_URL,\n  case_id: body.case_id || ('CASE-N8N-' + Date.now()),\n  model: body.model || 'mock',\n  alert: body.alert ?? null,\n  received_at: new Date().toISOString(),\n  plan: ['related_alerts','correlation_agent','ti_lookup','threat_intel_agent','asset_lookup',\n         'asset_context_agent','risk_score','risk_agent','summary_agent','route']\n}}];"
+      },
+      "id": "25926ec8-a867-49ab-9ea6-0b326934fba8",
+      "name": "SOC Orchestrator",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.backend_url }}/cases/start",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ case_id: $json.case_id, model: $json.model, alert: $json.alert, source: 'n8n', backend_url: $json.backend_url }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "c2393740-9673-4967-9b4b-9501afff7608",
+      "name": "Guardrails: Validate & Sanitise",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "67713763-51bd-4bb6-a75f-a4cbe5874266",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3b26468d-58d0-4201-9ef9-7642814287c4",
+      "name": "Valid Alert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/steps/related_alerts",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.ctx.model }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "bdca17ce-556c-43b2-9eba-a8110976c8d1",
+      "name": "Tool: SIEM Related Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/steps/correlation_agent",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.ctx.model }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "b9a2c821-6d77-4234-9c1f-744fbdd2854d",
+      "name": "Alert Correlation Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/steps/ti_lookup",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.ctx.model }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "d7109f52-0278-4037-9690-3ef3bbac241e",
+      "name": "Tool: Threat Intel Lookup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/steps/threat_intel_agent",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.ctx.model }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "664189fe-83e2-4e8e-a8d9-d63917fa764a",
+      "name": "Threat Intelligence Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/steps/asset_lookup",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.ctx.model }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "d9728c72-d4fa-449e-afd1-bd8383a344f5",
+      "name": "Tool: CMDB Asset Lookup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/steps/asset_context_agent",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.ctx.model }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "d9db10dc-20ae-45f4-884e-b504570b6e50",
+      "name": "Asset Context Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/steps/risk_score",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.ctx.model }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "fe505f88-3a8e-4567-a58a-4d4283e0e969",
+      "name": "Risk Scoring Engine (deterministic)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/steps/risk_agent",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.ctx.model }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "2c43895b-61bb-441a-8bf8-0713c4942d75",
+      "name": "Risk / Prioritisation Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2420,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/steps/summary_agent",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.ctx.model }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "a2f909ff-916c-4625-95b9-3be0e622c137",
+      "name": "Incident Summary Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/steps/route",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.ctx.model }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "e76a0741-9ac2-42bf-a32a-99c0a187660e",
+      "name": "Policy Router",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2860,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "c403d578-f06f-42a0-8bae-a8c13a9faaf6",
+                    "leftValue": "={{ $json.result.route }}",
+                    "rightValue": "AUTO_CLOSE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "A: Auto-close"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "112d4939-eafc-417a-8e18-28ff59ac4a63",
+                    "leftValue": "={{ $json.result.route }}",
+                    "rightValue": "ANALYST_REVIEW",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "H: Analyst review"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "841dc35e-9ea5-4ded-9662-b130794a43ff",
+                    "leftValue": "={{ $json.result.route }}",
+                    "rightValue": "ESCALATE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "E: Escalate"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "6ab20f63-7135-4169-aaca-d40f30baf53a",
+                    "leftValue": "={{ $json.result.route }}",
+                    "rightValue": "EXCEPTION",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "E: Exception"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9dfed48c-3509-45d2-afc2-21b8d447f729",
+      "name": "Route Switch (A / H / E)",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        3080,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/branch/auto_close",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "b13fd9ee-010d-438b-ab24-521648e5d124",
+      "name": "A: Auto-close & Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/branch/escalate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "2acd4fb4-e8bd-4446-8e17-53ef9c7dca17",
+      "name": "E: Notify IR Lead (Escalation)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3340,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/branch/exception",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "ae4ce6e9-6e56-45fd-8fd9-95a65f94085a",
+      "name": "E: Exception Queue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3340,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ctx.backend_url }}/cases/{{ $json.ctx.case_id }}/branch/await_approval",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ resume_url: $execution.resumeUrl }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "988b8635-40d8-4612-a058-d3351d91799e",
+      "name": "H: Register Pending Approval",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3600,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "httpMethod": "POST",
+        "options": {}
+      },
+      "id": "101d5990-d057-4cf5-bf23-a80c71008a71",
+      "name": "H: Wait for Human Decision",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3860,
+        220
+      ],
+      "webhookId": "5ee6a8b2-9a3f-4d0c-8bf3-39ad11df7a61"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.body.ctx.backend_url }}/cases/{{ $json.body.ctx.case_id }}/execute",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ via: 'n8n', decision: $json.body.decision }) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "ae33eb7e-a2e8-472b-937e-5b78580090ab",
+      "name": "Execute Approved Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4120,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Governed SOC triage\n**A** = Autonomous (agents, tools, auto-close of low-risk FPs)\n**H** = Human-in-the-loop (Wait node: analyst approves/rejects in the UI)\n**E** = Escalation (IR lead paged; exception queue for incomplete context)\n\nRouting thresholds live in backend policy code, not in prompts.",
+        "height": 220,
+        "width": 420
+      },
+      "id": "4fb1bde7-07eb-43c3-bd2f-0f51a1ac7d50",
+      "name": "Note: A/H/E legend",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### A: Autonomous agent chain\nEach agent = STOIC prompt + open-weight model + schema validation + grounding checks.\nTools = SIEM, Threat Intel, CMDB (synthetic).",
+        "height": 160,
+        "width": 520
+      },
+      "id": "c6f72845-d83c-4318-a88a-a4143fdb23eb",
+      "name": "Note: Agents",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### H: No containment without a recorded human approval\nBackend blocks /execute unless an approved decision exists (RBAC: L2 for review, SOC Lead for escalations).",
+        "height": 160,
+        "width": 560
+      },
+      "id": "66f82b2d-30ac-42a1-af36-593dfdd14da8",
+      "name": "Note: HITL",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3600,
+        380
+      ]
+    }
+  ],
+  "connections": {
+    "Security Alert (Webhook)": {
+      "main": [
+        [
+          {
+            "node": "SOC Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SOC Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Guardrails: Validate & Sanitise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardrails: Validate & Sanitise": {
+      "main": [
+        [
+          {
+            "node": "Valid Alert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Alert?": {
+      "main": [
+        [
+          {
+            "node": "Tool: SIEM Related Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "E: Exception Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: SIEM Related Alerts": {
+      "main": [
+        [
+          {
+            "node": "Alert Correlation Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Correlation Agent": {
+      "main": [
+        [
+          {
+            "node": "Tool: Threat Intel Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Threat Intel Lookup": {
+      "main": [
+        [
+          {
+            "node": "Threat Intelligence Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Threat Intelligence Agent": {
+      "main": [
+        [
+          {
+            "node": "Tool: CMDB Asset Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: CMDB Asset Lookup": {
+      "main": [
+        [
+          {
+            "node": "Asset Context Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asset Context Agent": {
+      "main": [
+        [
+          {
+            "node": "Risk Scoring Engine (deterministic)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Risk Scoring Engine (deterministic)": {
+      "main": [
+        [
+          {
+            "node": "Risk / Prioritisation Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Risk / Prioritisation Agent": {
+      "main": [
+        [
+          {
+            "node": "Incident Summary Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Incident Summary Agent": {
+      "main": [
+        [
+          {
+            "node": "Policy Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Policy Router": {
+      "main": [
+        [
+          {
+            "node": "Route Switch (A / H / E)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Switch (A / H / E)": {
+      "main": [
+        [
+          {
+            "node": "A: Auto-close & Log",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "H: Register Pending Approval",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "E: Notify IR Lead (Escalation)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "E: Exception Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "E: Notify IR Lead (Escalation)": {
+      "main": [
+        [
+          {
+            "node": "H: Register Pending Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "H: Register Pending Approval": {
+      "main": [
+        [
+          {
+            "node": "H: Wait for Human Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "H: Wait for Human Decision": {
+      "main": [
+        [
+          {
+            "node": "Execute Approved Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

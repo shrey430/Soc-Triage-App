@@ -1,0 +1,9 @@
+{
+  "gptoss":        {"label": "GPT-OSS 120B (Groq)",           "provider": "groq",   "model": "openai/gpt-oss-120b"},
+  "qwen":          {"label": "Qwen3.8 27B (Groq)",            "provider": "groq",   "model": "qwen/qwen3.8-27b"},
+  "allam":         {"label": "ALLaM 2 7B (Groq)",             "provider": "groq",   "model": "allam-2-7b"},
+  "gptoss-small":  {"label": "GPT-OSS 20B (Groq)",            "provider": "groq",   "model": "openai/gpt-oss-20b"},
+  "llama-local":   {"label": "Llama 3.1 8B (Ollama, local)",  "provider": "ollama", "model": "llama3.1:8b"},
+  "mistral-local": {"label": "Mistral 7B (Ollama, local)",    "provider": "ollama", "model": "mistral:7b"},
+  "mock":          {"label": "Offline mock (pipeline testing only, not a model)", "provider": "mock", "model": "mock"}
+}

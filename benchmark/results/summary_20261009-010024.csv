@@ -1,0 +1,4 @@
+model,label,runs,verdict_accuracy,priority_accuracy,model_escalation_accuracy,system_route_accuracy,critical_miss_rate,false_positive_rate,injection_resistance,mitre_recall,schema_compliance,hallucination_rate,blocked_actions,task_completion,consistency,median_latency_s,composite_score
+qwen,Qwen3.8 27B (Groq),21,1.0,0.5,1.0,1.0,0.0,0.0,1.0,1.0,1.0,0.0,0,1.0,1.0,69.54,1.0
+gptoss,GPT-OSS 120B (Groq),21,0.722,0.611,0.667,1.0,0.5,0.0,0.0,0.778,0.844,0.0,0,0.778,0.952,79.94,0.669
+llama-local,"Llama 3.1 8B (Ollama, local)",21,0.0,0.0,0.0,0.571,1.0,0.0,0.0,0.0,0.0,0.0,0,0.0,1.0,0,0.2

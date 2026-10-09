@@ -1,0 +1,8 @@
+[
+  {"alert_id": "EDR-91001", "timestamp": "2026-09-29T11:19:40Z", "source": "EDR", "host": "db-fin-01", "user": "svc-backup", "rule_name": "Volume shadow copy deletion", "severity": 4, "description": "vssadmin.exe delete shadows /all /quiet executed by svc-backup."},
+  {"alert_id": "EDR-91002", "timestamp": "2026-09-29T11:15:02Z", "source": "EDR", "host": "db-fin-01", "user": "svc-backup", "rule_name": "New service installed", "severity": 3, "description": "Service 'svchost_update' installed pointing to C:\\Windows\\Temp\\svchost_update.exe."},
+  {"alert_id": "FW-33019", "timestamp": "2026-09-29T11:12:55Z", "source": "Firewall", "host": "db-fin-01", "user": "", "rule_name": "Outbound connection to rare external IP", "severity": 3, "description": "db-fin-01 opened TLS session to 203.0.113.66:443 (first time seen in 90 days)."},
+  {"alert_id": "IDP-55290", "timestamp": "2026-09-29T08:40:51Z", "source": "Identity Provider (SSO)", "host": "lt-sales-042", "user": "j.menon", "rule_name": "MFA approved from new device", "severity": 2, "description": "MFA push approved for j.menon from an unregistered browser session."},
+  {"alert_id": "MAIL-4410", "timestamp": "2026-09-29T15:44:10Z", "source": "Email gateway", "host": "ws-hr-023", "user": "p.shah", "rule_name": "Macro-enabled attachment opened", "severity": 3, "description": "p.shah opened 'Revised_Salary_Bands.docm' from an external sender (first contact)."},
+  {"alert_id": "SIEM-238877", "timestamp": "2026-09-21T10:00:00Z", "source": "SIEM", "host": "web-01", "user": "", "rule_name": "Web scanner detected", "severity": 2, "description": "Automated vulnerability scanner user-agent seen against web-01."}
+]

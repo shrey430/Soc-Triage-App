@@ -1,0 +1,9 @@
+{
+  "_note": "Synthetic threat-intelligence feed for the PoC. All IPs are RFC 5737 documentation ranges; hashes and domains are fictitious.",
+  "203.0.113.66": {"type": "ip", "verdict": "malicious", "score": 95, "source": "Synthetic TI feed", "tags": ["ransomware-c2", "lockx-family"], "first_seen": "2026-08-11"},
+  "198.51.100.23": {"type": "ip", "verdict": "suspicious", "score": 35, "source": "Synthetic TI feed", "tags": ["commercial-vpn-exit", "anonymiser"], "first_seen": "2025-02-03"},
+  "203.0.113.250": {"type": "ip", "simulate": "timeout"},
+  "3b1f9c0d2e7a4b6c8d9e0f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e": {"type": "sha256", "verdict": "clean", "score": 0, "source": "Synthetic file-reputation feed", "tags": ["signed:Contoso Ltd", "known-good-updater"], "first_seen": "2024-11-20"},
+  "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08": {"type": "sha256", "verdict": "malicious", "score": 98, "source": "Synthetic file-reputation feed", "tags": ["ransomware", "lockx-family"], "first_seen": "2026-08-12"},
+  "cdn-sync.example.net": {"type": "domain", "verdict": "suspicious", "score": 60, "source": "Synthetic TI feed", "tags": ["newly-registered", "payload-hosting"], "first_seen": "2026-09-20"}
+}
